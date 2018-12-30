@@ -1,0 +1,13 @@
+[package]
+name = "osrm-ch-m2m"
+version = "0.1.0"
+authors = ["Michael Killough <michael.killough@deliveroo.co.uk>"]
+edition = "2018"
+
+[build-dependencies]
+bindgen = "0.42"
+
+[dependencies]
+bitvec = "0.9"
+priority-queue = "0.5"
+tar = "0.4"
