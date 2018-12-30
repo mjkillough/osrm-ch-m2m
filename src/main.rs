@@ -82,17 +82,11 @@ fn relax_outgoing_edges(
     weight: EdgeWeight,
     duration: EdgeWeight,
 ) {
-    println!("1 node {} weight {}", node, weight);
     if stall_at_node(graph, heap, direction, node, weight) {
-        println!("2");
         return;
     }
 
-    println!("3");
-
     for edge in graph.get_adjacent_edges(node, direction) {
-        println!("4 to {} weight {} + {}", edge.target, weight, edge.weight);
-
         let query = Query {
             node: edge.target,
             parent: node,
@@ -100,13 +94,11 @@ fn relax_outgoing_edges(
             duration: weight + edge.duration,
         };
 
-        if let Some(existing_query) = heap.get(edge.target) {
-            if (query.weight, query.duration) < (existing_query.weight, existing_query.duration) {
-                println!("update");
+        if let Some(current) = heap.get(edge.target) {
+            if (query.weight, query.duration) < (current.weight, current.duration) {
                 heap.push(query)
             }
         } else {
-            println!("insert");
             heap.push(query)
         }
     }
@@ -197,17 +189,9 @@ fn main() -> Result<()> {
             let new = (new_weight, new_duration);
 
             if new_weight < 0 {
-                println!("check loop");
-                // if (addLoopWeight(facade, node, new_weight, new_duration))
-                // {
-                //     current_weight = std::min(current_weight, new_weight);
-                //     current_duration = std::min(current_duration, new_duration);
-                //     middle_nodes_table[row_index * number_of_targets + column_index] = node;
-                // }
                 if let Some((loop_weight, loop_duration)) =
                     should_add_loop_weight(&graph, query.node, new_weight, new_duration)
                 {
-                    println!("add loop");
                     if Some((loop_weight, loop_duration)) < current {
                         results_table[idx] = Some((loop_weight, loop_duration));
                     }
