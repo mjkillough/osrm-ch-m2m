@@ -3,14 +3,14 @@ use std::collections::HashMap;
 
 use priority_queue::PriorityQueue;
 
-use crate::graph::{EdgeWeight, NodeId};
+use crate::graph::{NodeId, Weight};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Query {
     pub node: NodeId,
     pub parent: NodeId,
-    pub weight: EdgeWeight,
-    pub duration: EdgeWeight,
+    pub weight: Weight,
+    pub duration: Weight,
 }
 
 #[derive(Eq, PartialEq)]
@@ -37,7 +37,7 @@ where
 }
 
 pub struct QueryHeap {
-    heap: PriorityQueue<usize, Reverse<EdgeWeight>>,
+    heap: PriorityQueue<usize, Reverse<Weight>>,
     inserted: Vec<Query>,
     index: HashMap<NodeId, usize>,
 }

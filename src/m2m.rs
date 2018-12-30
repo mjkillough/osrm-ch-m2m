@@ -1,15 +1,15 @@
 use superslice::Ext;
 
 use crate::errors::*;
-use crate::graph::{Direction, EdgeWeight, Graph, NodeId};
+use crate::graph::{Direction, Graph, NodeId, Weight};
 use crate::heap::{Query, QueryHeap};
 
-struct NodeBucket {
+struct Bucket {
     middle_node: NodeId,
     parent_node: NodeId,
     column_index: usize, // column in weight/duration matrix ???
-    weight: EdgeWeight,
-    duration: EdgeWeight,
+    weight: Weight,
+    duration: Weight,
 }
 
 pub struct ManyToMany {
@@ -18,10 +18,10 @@ pub struct ManyToMany {
     num_sources: usize,
     num_targets: usize,
 
-    pub results: Vec<Option<(EdgeWeight, EdgeWeight)>>,
+    pub results: Vec<Option<(Weight, Weight)>>,
 
     graph: Graph,
-    buckets: Vec<NodeBucket>,
+    buckets: Vec<Bucket>,
     heap: QueryHeap,
 }
 
@@ -46,13 +46,13 @@ impl ManyToMany {
                 node: 791407,
                 weight: -477,
                 parent: 791407,
-                duration: 477,
+                duration: -477,
             },
             Query {
                 node: 791413,
                 weight: -87,
                 parent: 791413,
-                duration: 87,
+                duration: -87,
             },
         ]];
         let num_sources = 1;
@@ -102,7 +102,7 @@ impl ManyToMany {
     }
 
     fn backward_search(&mut self, query: Query, column: usize) {
-        self.buckets.push(NodeBucket {
+        self.buckets.push(Bucket {
             middle_node: query.node,
             parent_node: query.parent,
             column_index: column,
@@ -156,7 +156,7 @@ impl ManyToMany {
         self.relax_outgoing_edges(Direction::Forward, query.node, query.weight, query.duration);
     }
 
-    fn stall_at_node(&self, direction: Direction, node: NodeId, weight: EdgeWeight) -> bool {
+    fn stall_at_node(&self, direction: Direction, node: NodeId, weight: Weight) -> bool {
         for edge in self.graph.get_adjacent_edges(node, !direction) {
             if let Some(query) = self.heap.get(edge.target) {
                 if query.weight + edge.weight < weight {
@@ -171,8 +171,8 @@ impl ManyToMany {
         &mut self,
         direction: Direction,
         node: NodeId,
-        weight: EdgeWeight,
-        duration: EdgeWeight,
+        weight: Weight,
+        duration: Weight,
     ) {
         if self.stall_at_node(direction, node, weight) {
             return;
@@ -183,7 +183,7 @@ impl ManyToMany {
                 node: edge.target,
                 parent: node,
                 weight: weight + edge.weight,
-                duration: weight + edge.duration,
+                duration: duration + edge.duration,
             };
 
             if let Some(current) = self.heap.get(edge.target) {
@@ -196,7 +196,7 @@ impl ManyToMany {
         }
     }
 
-    fn get_loop_weight(&self, node: NodeId, use_duration: bool) -> Option<EdgeWeight> {
+    fn get_loop_weight(&self, node: NodeId, use_duration: bool) -> Option<Weight> {
         let mut loop_weight = None;
         for edge in self.graph.get_adjacent_edges(node, Direction::Forward) {
             if node == edge.target {
@@ -206,7 +206,7 @@ impl ManyToMany {
                     edge.weight
                 };
                 loop_weight = loop_weight
-                    .map(|weight| EdgeWeight::min(weight, value))
+                    .map(|weight| Weight::min(weight, value))
                     .or(Some(value));
             }
         }
@@ -216,9 +216,9 @@ impl ManyToMany {
     fn should_add_loop_weight(
         &self,
         node: NodeId,
-        weight: EdgeWeight,
-        duration: EdgeWeight,
-    ) -> Option<(EdgeWeight, EdgeWeight)> {
+        weight: Weight,
+        duration: Weight,
+    ) -> Option<(Weight, Weight)> {
         // Special case for CH when contractor creates a loop edge node->node.
         assert!(weight < 0);
 

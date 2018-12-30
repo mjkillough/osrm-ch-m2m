@@ -16,7 +16,7 @@ pub const NODE_ARRAY_PATH: &str = "/ch/metrics/duration/contracted_graph/node_ar
 
 pub type NodeId = u32;
 pub type EdgeId = u32;
-pub type EdgeWeight = i32;
+pub type Weight = i32;
 
 pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry, Unpack};
 

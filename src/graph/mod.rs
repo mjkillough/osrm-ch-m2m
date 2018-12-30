@@ -8,7 +8,7 @@ use bitvec::BitVec;
 use self::storage::{EdgeArrayEntry, NodeArrayEntry};
 use crate::errors::*;
 
-pub use self::storage::{EdgeWeight, NodeId};
+pub use self::storage::{NodeId, Weight};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Direction {
@@ -30,8 +30,8 @@ impl Not for Direction {
 #[derive(Debug)]
 pub struct Edge {
     pub target: NodeId,
-    pub weight: EdgeWeight,
-    pub duration: EdgeWeight,
+    pub weight: Weight,
+    pub duration: Weight,
 
     // TODO: Are these mutually exclusive? If so, we can treat as an enum.
     // OSRM stores them as two bools, which allows them to equal each other.
