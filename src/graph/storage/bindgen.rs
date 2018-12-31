@@ -23,6 +23,24 @@ macro_rules! derive_unpack {
     };
 }
 
+// Graph
 derive_unpack!(EdgeArrayEntry);
 derive_unpack!(NodeArrayEntry);
 derive_unpack!(Metadata);
+
+// RTree
+derive_unpack!(TreeNode);
+derive_unpack!(TreeLevelStart);
+derive_unpack!(Coordinate);
+
+// fileIndex
+derive_unpack!(EdgeBasedNodeSegment);
+
+impl From<Coordinate> for crate::Coordinate {
+    fn from(other: Coordinate) -> crate::Coordinate {
+        crate::Coordinate {
+            longitude: crate::coordinates::FixedLongitude(other.longitude),
+            latitude: crate::coordinates::FixedLatitude(other.latitude),
+        }
+    }
+}

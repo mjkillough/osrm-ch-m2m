@@ -18,7 +18,7 @@ pub type NodeId = u32;
 pub type EdgeId = u32;
 pub type Weight = i32;
 
-pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry, Unpack};
+pub use self::bindgen::*;
 
 fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<u8>> {
     let file = BufReader::new(File::open(tar.as_ref().clone())?);
@@ -46,7 +46,7 @@ fn read_metadata(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Metada
     Ok(metadata)
 }
 
-pub fn read_array<T>(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<T>>
+pub fn read_array_from_tar<T>(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<T>>
 where
     T: Unpack,
 {
@@ -54,12 +54,8 @@ where
     let element_count = metadata.element_count as usize;
     let element_size = std::mem::size_of::<T>();
 
-    let mut vec = Vec::with_capacity(0);
+    let mut vec = Vec::with_capacity(0); // FIXME
     let bytes = read_file_from_tar(tar, path)?;
-
-    println!("element_count={}", element_count);
-    println!("element_size={}", element_size);
-    println!("bytes.len()={}", bytes.len());
 
     for i in 0..element_count {
         let start = i * element_size;
@@ -68,6 +64,27 @@ where
     }
 
     // TODO: assert we read the entire file?
+
+    Ok(vec)
+}
+
+pub fn read_array_from_file<T>(path: impl AsRef<Path>) -> Result<Vec<T>>
+where
+    T: Unpack,
+{
+    let mut file = BufReader::new(File::open(path)?);
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes);
+
+    let element_size = std::mem::size_of::<T>();
+    let element_count = bytes.len() / element_size;
+
+    let mut vec = Vec::with_capacity(element_count);
+    for i in 0..element_count {
+        let start = i * element_size;
+        let element = T::unpack(&bytes[start..start + element_size]);
+        vec.push(element);
+    }
 
     Ok(vec)
 }

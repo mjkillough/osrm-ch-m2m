@@ -4,13 +4,7 @@ use std::path::PathBuf;
 fn generate_osrm_types() {
     let builder = bindgen::Builder::default()
         .header("src/graph/storage/types.hpp")
-        .whitelist_type("EdgeArrayEntry")
-        .whitelist_type("NodeArrayEntry")
-        .whitelist_type("Metadata")
-        .whitelist_var("EDGE_ARRAY_ENTRY_SIZE")
-        .whitelist_var("NODE_ARRAY_ENTRY_SIZE")
-        .whitelist_var("METADATA_SIZE")
-        .opaque_type("std::.*")
+        .blacklist_type("std::.*")
         .clang_arg("-std=c++11");
     let bindings = builder
         .generate()

@@ -8,6 +8,7 @@ edition = "2018"
 bindgen = "0.42"
 
 [dependencies]
+bitflags = "1.0"
 bitvec = "0.9"
 priority-queue = "0.5"
 superslice = "0.1"

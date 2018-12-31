@@ -1,3 +1,5 @@
+mod rectangle;
+mod rtree;
 mod storage;
 
 use std::ops::Not;
@@ -60,8 +62,8 @@ pub struct Graph {
 impl Graph {
     pub fn from_file(tar: impl AsRef<Path>) -> Result<Self> {
         Ok(Graph {
-            nodes: storage::read_array(tar.as_ref(), storage::NODE_ARRAY_PATH)?,
-            edges: storage::read_array(tar.as_ref(), storage::EDGE_ARRAY_PATH)?,
+            nodes: storage::read_array_from_tar(tar.as_ref(), storage::NODE_ARRAY_PATH)?,
+            edges: storage::read_array_from_tar(tar.as_ref(), storage::EDGE_ARRAY_PATH)?,
             include_edges: storage::read_bit_array(tar.as_ref(), storage::EDGE_FILTER_PATH)?,
         })
     }
@@ -92,7 +94,7 @@ impl Graph {
             })
             .map(|(_, entry)| entry.into())
             .collect::<Vec<_>>();
-        v.into_iter()
+        v.into_iter() // TODO: remove vec
     }
 
     fn include_edge(&self, edge_id: usize) -> bool {
