@@ -6,8 +6,7 @@ use crate::heap::{Query, QueryHeap};
 
 struct Bucket {
     middle_node: NodeId,
-    parent_node: NodeId,
-    column_index: usize, // column in weight/duration matrix ???
+    column_index: usize,
     weight: Weight,
     duration: Weight,
 }
@@ -15,8 +14,6 @@ struct Bucket {
 pub struct ManyToMany {
     source_queries: Vec<Vec<Query>>,
     target_queries: Vec<Vec<Query>>,
-    num_sources: usize,
-    num_targets: usize,
 
     pub results: Vec<Option<(Weight, Weight)>>,
 
@@ -26,49 +23,19 @@ pub struct ManyToMany {
 }
 
 impl ManyToMany {
-    pub fn new() -> Result<ManyToMany> {
-        let target_queries = vec![vec![
-            Query {
-                node: 861677,
-                weight: 77,
-                parent: 861677,
-                duration: 77,
-            },
-            Query {
-                node: 861680,
-                weight: 29,
-                parent: 861680,
-                duration: 29,
-            },
-        ]];
-        let source_queries = vec![vec![
-            Query {
-                node: 791407,
-                weight: -477,
-                parent: 791407,
-                duration: -477,
-            },
-            Query {
-                node: 791413,
-                weight: -87,
-                parent: 791413,
-                duration: -87,
-            },
-        ]];
-        let num_sources = 1;
-        let num_targets = 1;
-
-        let results = vec![None; num_sources * num_targets];
+    pub fn new(
+        graph: Graph,
+        target_queries: Vec<Vec<Query>>,
+        source_queries: Vec<Vec<Query>>,
+    ) -> Result<ManyToMany> {
+        let results = vec![None; target_queries.len() * source_queries.len()];
 
         let buckets = Vec::new();
         let heap = QueryHeap::new();
-        let graph = Graph::from_file("data/1.osrm.hsgr")?;
 
         Ok(ManyToMany {
             source_queries,
             target_queries,
-            num_sources,
-            num_targets,
             results,
             buckets,
             graph,
@@ -78,6 +45,8 @@ impl ManyToMany {
 
     pub fn perform(&mut self) {
         for target_idx in 0..self.target_queries.len() {
+            self.heap = QueryHeap::new();
+
             for query in &self.target_queries[target_idx] {
                 self.heap.push(*query);
             }
@@ -89,8 +58,9 @@ impl ManyToMany {
 
         self.buckets.sort_by_key(|bucket| bucket.middle_node);
 
-        self.heap = QueryHeap::new();
         for source_idx in 0..self.source_queries.len() {
+            self.heap = QueryHeap::new();
+
             for query in &self.source_queries[source_idx] {
                 self.heap.push(*query);
             }
@@ -104,7 +74,6 @@ impl ManyToMany {
     fn backward_search(&mut self, query: Query, column: usize) {
         self.buckets.push(Bucket {
             middle_node: query.node,
-            parent_node: query.parent,
             column_index: column,
             weight: query.weight,
             duration: query.duration,
@@ -125,11 +94,12 @@ impl ManyToMany {
         let range = self
             .buckets
             .equal_range_by_key(&query.node, |bucket| bucket.middle_node);
+
         for bucket in &self.buckets[range] {
             let target_weight = bucket.weight;
             let target_duration = bucket.duration;
 
-            let idx = row * self.num_targets + bucket.column_index;
+            let idx = row * self.target_queries.len() + bucket.column_index;
             let current = self.results[idx];
 
             let new_weight = source_weight + target_weight;

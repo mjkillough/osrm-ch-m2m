@@ -7,9 +7,6 @@ fn generate_osrm_types() {
         .whitelist_type("EdgeArrayEntry")
         .whitelist_type("NodeArrayEntry")
         .whitelist_type("Metadata")
-        .whitelist_var("EDGE_ARRAY_ENTRY_SIZE")
-        .whitelist_var("NODE_ARRAY_ENTRY_SIZE")
-        .whitelist_var("METADATA_SIZE")
         .opaque_type("std::.*")
         .clang_arg("-std=c++11");
     let bindings = builder

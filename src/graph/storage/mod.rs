@@ -15,7 +15,7 @@ pub const EDGE_ARRAY_PATH: &str = "/ch/metrics/duration/contracted_graph/edge_ar
 pub const NODE_ARRAY_PATH: &str = "/ch/metrics/duration/contracted_graph/node_array";
 
 pub type NodeId = u32;
-pub type EdgeId = u32;
+// pub type EdgeId = u32;
 pub type Weight = i32;
 
 pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry, Unpack};
@@ -56,10 +56,6 @@ where
 
     let mut vec = Vec::with_capacity(0);
     let bytes = read_file_from_tar(tar, path)?;
-
-    println!("element_count={}", element_count);
-    println!("element_size={}", element_size);
-    println!("bytes.len()={}", bytes.len());
 
     for i in 0..element_count {
         let start = i * element_size;

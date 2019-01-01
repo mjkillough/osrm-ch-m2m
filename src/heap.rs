@@ -2,10 +2,11 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use priority_queue::PriorityQueue;
+use serde::Deserialize;
 
 use crate::graph::{NodeId, Weight};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Query {
     pub node: NodeId,
     pub parent: NodeId,
@@ -49,10 +50,6 @@ impl QueryHeap {
             inserted: Vec::new(),
             index: HashMap::new(),
         }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.heap.is_empty()
     }
 
     /// Inserts the query into the priority queue, updating the existing query

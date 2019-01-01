@@ -7,6 +7,7 @@ use std::result;
 pub enum Error {
     Message(&'static str),
     IoError(std::io::Error),
+    Serde(serde_json::Error),
     MissingFile { tar: PathBuf, path: PathBuf },
 }
 
@@ -15,6 +16,7 @@ impl Display for Error {
         match self {
             Error::Message(inner) => inner.fmt(f),
             Error::IoError(inner) => inner.fmt(f),
+            Error::Serde(inner) => inner.fmt(f),
             Error::MissingFile { tar, path } => write!(f, "Not found in {:?}: {:?}", tar, path),
         }
     }
@@ -25,6 +27,7 @@ impl StdError for Error {
         match self {
             Error::Message(_) => None,
             Error::IoError(inner) => Some(inner),
+            Error::Serde(inner) => Some(inner),
             Error::MissingFile { .. } => None,
         }
     }
@@ -39,6 +42,12 @@ impl From<&'static str> for Error {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Error {
         Error::IoError(error)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Error {
+        Error::Serde(error)
     }
 }
 

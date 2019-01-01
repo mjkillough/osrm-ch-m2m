@@ -22,7 +22,3 @@ struct Metadata
 {
     std::uint64_t element_count;
 };
-
-const auto EDGE_ARRAY_ENTRY_SIZE = sizeof(EdgeArrayEntry);
-const auto NODE_ARRAY_ENTRY_SIZE = sizeof(NodeArrayEntry);
-const auto METADATA_SIZE = sizeof(Metadata);
