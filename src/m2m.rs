@@ -181,6 +181,7 @@ impl<'a> ForwardSearch<'a> {
         );
     }
 
+    // TODO: Find graph/queries that use this. This is currently UNTESTED.
     fn should_add_loop_weight(
         &self,
         node: NodeId,
