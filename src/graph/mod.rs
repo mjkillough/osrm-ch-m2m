@@ -82,7 +82,7 @@ impl Graph {
 
         let edges_start = node.first_edge as usize;
         let edges_end = next_node.first_edge as usize;
-        let v = self.edges[edges_start..edges_end]
+        self.edges[edges_start..edges_end]
             .iter()
             .enumerate()
             .filter(move |(i, _)| self.include_edge(edges_start + *i))
@@ -91,8 +91,6 @@ impl Graph {
                     || (direction == Direction::Backward && entry.backward())
             })
             .map(|(_, entry)| entry.into())
-            .collect::<Vec<_>>();
-        v.into_iter()
     }
 
     fn include_edge(&self, edge_id: usize) -> bool {
