@@ -2,11 +2,13 @@ mod bindgen;
 
 use std::fs::File;
 use std::io::{BufReader, Read};
+use std::mem;
 use std::path::Path;
 
 use bitvec::BitVec;
 use tar;
 
+pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry};
 use crate::errors::*;
 
 // TODO: Check exclude.meta and dynamically determine EDGE_FILTER_PATH?
@@ -18,7 +20,28 @@ pub type NodeId = u32;
 // pub type EdgeId = u32;
 pub type Weight = i32;
 
-pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry, Unpack};
+pub trait Unpack: Sized {
+    fn unpack(mut bytes: Vec<u8>) -> Box<Self> {
+        assert!(bytes.len() == mem::size_of::<Self>());
+        let boxed = unsafe { Box::from_raw(bytes.as_mut_ptr() as *mut Self) };
+        mem::forget(bytes);
+        boxed
+    }
+
+    fn unpack_vec(mut bytes: Vec<u8>) -> Vec<Self> {
+        assert!(bytes.len() % mem::size_of::<Self>() == 0);
+        let element_count = bytes.len() / mem::size_of::<Self>();
+        let vec = unsafe {
+            Vec::from_raw_parts(
+                bytes.as_mut_ptr() as *mut Self,
+                element_count,
+                element_count,
+            )
+        };
+        mem::forget(bytes);
+        vec
+    }
+}
 
 fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<u8>> {
     let file = BufReader::new(File::open(tar.as_ref())?);
@@ -39,10 +62,10 @@ fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<V
     })
 }
 
-fn read_metadata(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Metadata> {
+fn read_metadata(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Box<Metadata>> {
     let metadata_path = path.as_ref().with_extension("meta");
     let metadata_bytes = read_file_from_tar(tar.as_ref(), metadata_path)?;
-    let metadata = Metadata::unpack(&metadata_bytes);
+    let metadata = Metadata::unpack(metadata_bytes);
     Ok(metadata)
 }
 
@@ -52,18 +75,11 @@ where
 {
     let metadata = read_metadata(tar.as_ref(), path.as_ref())?;
     let element_count = metadata.element_count as usize;
-    let element_size = std::mem::size_of::<T>();
 
-    let mut vec = Vec::with_capacity(0);
     let bytes = read_file_from_tar(tar, path)?;
+    let vec = T::unpack_vec(bytes);
 
-    for i in 0..element_count {
-        let start = i * element_size;
-        let element = T::unpack(&bytes[start..start + element_size]);
-        vec.push(element);
-    }
-
-    // TODO: assert we read the entire file?
+    assert!(vec.len() == element_count);
 
     Ok(vec)
 }
