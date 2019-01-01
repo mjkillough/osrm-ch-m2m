@@ -69,3 +69,29 @@ struct EdgeBasedNodeSegment
     NodeID v;                            // node-based graph node ID of the target node
     unsigned short fwd_segment_position; // segment id in a compressed geometry
 };
+
+//
+
+struct GeometryID
+{
+    NodeID id : 31;
+    std::uint32_t forward : 1;
+};
+
+struct ComponentID
+{
+    std::uint32_t id : 31;
+    std::uint32_t is_tiny : 1;
+};
+
+struct EdgeBasedNode
+{
+    GeometryID geometry_id;
+    ComponentID component_id;
+    std::uint32_t annotation_id : 31;
+    std::uint32_t segregated : 1;
+};
+
+// SegmentDataContainerImpl
+
+typedef std::uint32_t SegmentIndex;

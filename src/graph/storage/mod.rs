@@ -1,4 +1,5 @@
 mod bindgen;
+mod packed_vector;
 
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -9,6 +10,9 @@ use tar;
 
 use crate::errors::*;
 
+pub use self::bindgen::*;
+pub use self::packed_vector::PackedVector;
+
 // TODO: Check exclude.meta and dynamically determine EDGE_FILTER_PATH?
 pub const EDGE_FILTER_PATH: &str = "/ch/metrics/duration/exclude/0/edge_filter";
 pub const EDGE_ARRAY_PATH: &str = "/ch/metrics/duration/contracted_graph/edge_array";
@@ -17,8 +21,6 @@ pub const NODE_ARRAY_PATH: &str = "/ch/metrics/duration/contracted_graph/node_ar
 pub type NodeId = u32;
 pub type EdgeId = u32;
 pub type Weight = i32;
-
-pub use self::bindgen::*;
 
 fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<u8>> {
     let file = BufReader::new(File::open(tar.as_ref().clone())?);
@@ -87,6 +89,18 @@ where
     }
 
     Ok(vec)
+}
+
+pub fn read_packed_vector(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<PackedVector> {
+    let metadata = read_metadata(tar, path.as_ref().join("number_of_elements"))?;
+
+    let mut file = BufReader::new(File::open(path)?);
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes);
+
+    let packed_vector = PackedVector::new(bytes, metadata.element_count as usize);
+
+    Ok(packed_vector)
 }
 
 pub fn read_bit_array(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<BitVec> {

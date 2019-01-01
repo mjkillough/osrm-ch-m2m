@@ -4,6 +4,8 @@
 
 use std::mem::{size_of, transmute};
 
+use byteorder::{ByteOrder, NativeEndian};
+
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub trait Unpack {
@@ -35,6 +37,12 @@ derive_unpack!(Coordinate);
 
 // fileIndex
 derive_unpack!(EdgeBasedNodeSegment);
+
+derive_unpack!(GeometryID);
+derive_unpack!(ComponentID);
+derive_unpack!(EdgeBasedNode);
+
+derive_unpack!(SegmentIndex);
 
 impl From<Coordinate> for crate::Coordinate {
     fn from(other: Coordinate) -> crate::Coordinate {

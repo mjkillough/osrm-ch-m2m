@@ -1,3 +1,4 @@
+mod geometry;
 mod rectangle;
 mod rtree;
 mod storage;

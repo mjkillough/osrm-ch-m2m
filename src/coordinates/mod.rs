@@ -54,12 +54,6 @@ impl From<FloatCoordinate> for Coordinate {
     }
 }
 
-impl Coordinate {
-    pub fn from_wgs84(&self) -> Coordinate {
-        FloatCoordinate::from(*self).from_wgs84().into()
-    }
-}
-
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct FloatCoordinate {
     pub longitude: FloatLongitude,

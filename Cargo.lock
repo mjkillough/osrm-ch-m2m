@@ -55,6 +55,11 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "byteorder"
+version = "1.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "cc"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -188,6 +193,7 @@ dependencies = [
  "bindgen 0.42.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitvec 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "priority-queue 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "superslice 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tar 0.4.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -404,6 +410,7 @@ dependencies = [
 "checksum bindgen 0.42.3 (registry+https://github.com/rust-lang/crates.io-index)" = "e0f199ccbabf5e9f9e13a3096534e80c9ce37aee440789dafaa47190e283245c"
 "checksum bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "228047a76f468627ca71776ecdebd732a3423081fcf5125585bcd7c49886ce12"
 "checksum bitvec 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cfadef5c4e2c2e64067b9ecc061179f12ac7ec65ba613b1f60f3972bbada1f5b"
+"checksum byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "94f88df23a25417badc922ab0f5716cc1330e87f71ddd9203b3a3ccd9cedf75d"
 "checksum cc 1.0.28 (registry+https://github.com/rust-lang/crates.io-index)" = "bb4a8b715cb4597106ea87c7c84b2f1d452c7492033765df7f32651e66fcf749"
 "checksum cexpr 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "8fc0086be9ca82f7fc89fc873435531cb898b86e850005850de1f820e2db6e9b"
 "checksum cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "082bb9b28e00d3c9d39cc03e64ce4cea0f1bb9b3fde493f0cbc008472d22bdf4"
