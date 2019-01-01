@@ -21,7 +21,7 @@ pub type Weight = i32;
 pub use self::bindgen::{EdgeArrayEntry, Metadata, NodeArrayEntry, Unpack};
 
 fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Vec<u8>> {
-    let file = BufReader::new(File::open(tar.as_ref().clone())?);
+    let file = BufReader::new(File::open(tar.as_ref())?);
     let mut archive = tar::Archive::new(file);
 
     for file in archive.entries()? {
@@ -33,10 +33,10 @@ fn read_file_from_tar(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<V
         }
     }
 
-    return Err(Error::MissingFile {
+    Err(Error::MissingFile {
         tar: tar.as_ref().to_owned(),
         path: path.as_ref().to_owned(),
-    });
+    })
 }
 
 fn read_metadata(tar: impl AsRef<Path>, path: impl AsRef<Path>) -> Result<Metadata> {

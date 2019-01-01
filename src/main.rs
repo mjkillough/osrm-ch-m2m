@@ -46,7 +46,7 @@ fn convert_results(results: Vec<Vec<Option<(i32, i32)>>>) -> Vec<Vec<f64>> {
             row.iter()
                 .map(|option| option.unwrap_or((0, 0)))
                 // Durations are in deciseconds (why??)
-                .map(|(_, duration)| duration as f64 / 10.)
+                .map(|(_, duration)| f64::from(duration) / 10.)
                 .collect()
         })
         .collect()

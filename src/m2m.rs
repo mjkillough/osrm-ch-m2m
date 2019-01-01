@@ -33,7 +33,7 @@ impl<'a> Search<'a> {
                 }
             }
         }
-        return false;
+        false
     }
 
     fn relax_outgoing_edges(
@@ -195,7 +195,7 @@ impl<'a> ForwardSearch<'a> {
         }
 
         // No loop found or adjusted weight is negative.
-        return None;
+        None
     }
 
     fn get_loop_weight(&self, node: NodeId, use_duration: bool) -> Option<Weight> {
@@ -213,7 +213,7 @@ impl<'a> ForwardSearch<'a> {
                 };
                 loop_weight = loop_weight
                     .map(|weight| Weight::min(weight, value))
-                    .or(Some(value));
+                    .or_else(|| Some(value));
             }
         }
         loop_weight
@@ -235,12 +235,10 @@ pub fn many_to_many(
 
     buckets.sort_by_key(|bucket| bucket.middle_node);
 
-    let results = source_queries
+    source_queries
         .into_iter()
         .map(|queries| ForwardSearch::new(graph, &buckets, queries, num_targets).perform())
-        .collect();
-
-    results
+        .collect()
 }
 
 // Differs only in `.into_iter()` -> `.into_par_iter()`, but we can't easily make the
@@ -260,10 +258,8 @@ pub fn parallel_many_to_many(
 
     buckets.sort_by_key(|bucket| bucket.middle_node);
 
-    let results = source_queries
+    source_queries
         .into_par_iter()
         .map(|queries| ForwardSearch::new(graph, &buckets, queries, num_targets).perform())
-        .collect();
-
-    results
+        .collect()
 }
