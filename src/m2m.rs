@@ -1,6 +1,5 @@
 use superslice::Ext;
 
-use crate::errors::*;
 use crate::graph::{Direction, Graph, NodeId, Weight};
 use crate::heap::{Query, QueryHeap};
 
@@ -11,119 +10,18 @@ struct Bucket {
     duration: Weight,
 }
 
-pub struct ManyToMany {
-    source_queries: Vec<Vec<Query>>,
-    target_queries: Vec<Vec<Query>>,
-
-    pub results: Vec<Option<(Weight, Weight)>>,
-
-    graph: Graph,
-    buckets: Vec<Bucket>,
+struct Search<'a> {
+    graph: &'a Graph,
     heap: QueryHeap,
 }
 
-impl ManyToMany {
-    pub fn new(
-        graph: Graph,
-        target_queries: Vec<Vec<Query>>,
-        source_queries: Vec<Vec<Query>>,
-    ) -> Result<ManyToMany> {
-        let results = vec![None; target_queries.len() * source_queries.len()];
-
-        let buckets = Vec::new();
-        let heap = QueryHeap::new();
-
-        Ok(ManyToMany {
-            source_queries,
-            target_queries,
-            results,
-            buckets,
-            graph,
-            heap,
-        })
-    }
-
-    pub fn perform(&mut self) {
-        for target_idx in 0..self.target_queries.len() {
-            self.heap = QueryHeap::new();
-
-            for query in &self.target_queries[target_idx] {
-                self.heap.push(*query);
-            }
-
-            while let Some(query) = self.heap.pop() {
-                self.backward_search(query, target_idx);
-            }
+impl<'a> Search<'a> {
+    fn new(graph: &'a Graph, queries: Vec<Query>) -> Self {
+        let mut heap = QueryHeap::new();
+        for query in queries {
+            heap.push(query);
         }
-
-        self.buckets.sort_by_key(|bucket| bucket.middle_node);
-
-        for source_idx in 0..self.source_queries.len() {
-            self.heap = QueryHeap::new();
-
-            for query in &self.source_queries[source_idx] {
-                self.heap.push(*query);
-            }
-
-            while let Some(query) = self.heap.pop() {
-                self.forward_search(query, source_idx);
-            }
-        }
-    }
-
-    fn backward_search(&mut self, query: Query, column: usize) {
-        self.buckets.push(Bucket {
-            middle_node: query.node,
-            column_index: column,
-            weight: query.weight,
-            duration: query.duration,
-        });
-
-        self.relax_outgoing_edges(
-            Direction::Backward,
-            query.node,
-            query.weight,
-            query.duration,
-        );
-    }
-
-    fn forward_search(&mut self, query: Query, row: usize) {
-        let source_weight = query.weight;
-        let source_duration = query.duration;
-
-        let range = self
-            .buckets
-            .equal_range_by_key(&query.node, |bucket| bucket.middle_node);
-
-        for bucket in &self.buckets[range] {
-            let target_weight = bucket.weight;
-            let target_duration = bucket.duration;
-
-            let idx = row * self.target_queries.len() + bucket.column_index;
-            let current = self.results[idx];
-
-            let new_weight = source_weight + target_weight;
-            let new_duration = source_duration + target_duration;
-            let new = (new_weight, new_duration);
-
-            if new_weight < 0 {
-                if let Some((loop_weight, loop_duration)) =
-                    self.should_add_loop_weight(query.node, new_weight, new_duration)
-                {
-                    if Some((loop_weight, loop_duration)) < current {
-                        self.results[idx] = Some((loop_weight, loop_duration));
-                    }
-                }
-            } else if current.is_none() {
-                self.results[idx] = Some(new);
-            } else if let Some(current) = current {
-                if new < current {
-                    self.results[idx] = Some(new);
-                }
-            }
-        }
-
-        self.relax_outgoing_edges(Direction::Forward, query.node, query.weight, query.duration);
+        Search { graph, heap }
     }
 
     fn stall_at_node(&self, direction: Direction, node: NodeId, weight: Weight) -> bool {
@@ -165,22 +63,116 @@ impl ManyToMany {
             }
         }
     }
+}
 
-    fn get_loop_weight(&self, node: NodeId, use_duration: bool) -> Option<Weight> {
-        let mut loop_weight = None;
-        for edge in self.graph.get_adjacent_edges(node, Direction::Forward) {
-            if node == edge.target {
-                let value = if use_duration {
-                    edge.duration
-                } else {
-                    edge.weight
-                };
-                loop_weight = loop_weight
-                    .map(|weight| Weight::min(weight, value))
-                    .or(Some(value));
+struct BackwardSearch<'a> {
+    search: Search<'a>,
+    column_index: usize,
+}
+
+impl<'a> BackwardSearch<'a> {
+    fn new(graph: &'a Graph, queries: Vec<Query>, column_index: usize) -> Self {
+        let search = Search::new(graph, queries);
+        BackwardSearch {
+            search,
+            column_index,
+        }
+    }
+
+    fn perform(mut self) -> Vec<Bucket> {
+        let mut buckets = Vec::new();
+
+        while let Some(query) = self.search.heap.pop() {
+            buckets.push(Bucket {
+                middle_node: query.node,
+                column_index: self.column_index,
+                weight: query.weight,
+                duration: query.duration,
+            });
+
+            self.search.relax_outgoing_edges(
+                Direction::Backward,
+                query.node,
+                query.weight,
+                query.duration,
+            );
+        }
+
+        buckets
+    }
+}
+
+struct ForwardSearch<'a> {
+    search: Search<'a>,
+    buckets: &'a [Bucket],
+    results: Vec<Option<(Weight, Weight)>>,
+}
+
+impl<'a> ForwardSearch<'a> {
+    fn new(
+        graph: &'a Graph,
+        buckets: &'a [Bucket],
+        queries: Vec<Query>,
+        num_targets: usize,
+    ) -> Self {
+        let search = Search::new(graph, queries);
+        let results = vec![None; num_targets];
+        ForwardSearch {
+            search,
+            buckets,
+            results,
+        }
+    }
+
+    fn perform(mut self) -> Vec<Option<(Weight, Weight)>> {
+        while let Some(query) = self.search.heap.pop() {
+            self.process_query(query);
+        }
+        self.results
+    }
+
+    fn process_query(&mut self, query: Query) {
+        let source_weight = query.weight;
+        let source_duration = query.duration;
+
+        let range = self
+            .buckets
+            .equal_range_by_key(&query.node, |bucket| bucket.middle_node);
+
+        for bucket in &self.buckets[range] {
+            let target_weight = bucket.weight;
+            let target_duration = bucket.duration;
+
+            let idx = bucket.column_index;
+            let current = self.results[idx];
+
+            let new_weight = source_weight + target_weight;
+            let new_duration = source_duration + target_duration;
+            let new = (new_weight, new_duration);
+
+            if new_weight < 0 {
+                if let Some((loop_weight, loop_duration)) =
+                    self.should_add_loop_weight(query.node, new_weight, new_duration)
+                {
+                    if Some((loop_weight, loop_duration)) < current {
+                        self.results[idx] = Some((loop_weight, loop_duration));
+                    }
+                }
+            } else if current.is_none() {
+                self.results[idx] = Some(new);
+            } else if let Some(current) = current {
+                if new < current {
+                    self.results[idx] = Some(new);
+                }
             }
         }
-        loop_weight
+
+        self.search.relax_outgoing_edges(
+            Direction::Forward,
+            query.node,
+            query.weight,
+            query.duration,
+        );
     }
 
     fn should_add_loop_weight(
@@ -204,4 +196,48 @@ impl ManyToMany {
         // No loop found or adjusted weight is negative.
         return None;
     }
+
+    fn get_loop_weight(&self, node: NodeId, use_duration: bool) -> Option<Weight> {
+        let mut loop_weight = None;
+        for edge in self
+            .search
+            .graph
+            .get_adjacent_edges(node, Direction::Forward)
+        {
+            if node == edge.target {
+                let value = if use_duration {
+                    edge.duration
+                } else {
+                    edge.weight
+                };
+                loop_weight = loop_weight
+                    .map(|weight| Weight::min(weight, value))
+                    .or(Some(value));
+            }
+        }
+        loop_weight
+    }
+}
+
+pub fn many_to_many(
+    graph: &Graph,
+    source_queries: Vec<Vec<Query>>,
+    target_queries: Vec<Vec<Query>>,
+) -> Vec<Vec<Option<(Weight, Weight)>>> {
+    let num_targets = target_queries.len();
+    let mut buckets = target_queries
+        .into_iter()
+        .enumerate()
+        .map(|(idx, queries)| BackwardSearch::new(graph, queries, idx).perform())
+        .flatten()
+        .collect::<Vec<_>>();
+
+    buckets.sort_by_key(|bucket| bucket.middle_node);
+
+    let results = source_queries
+        .into_iter()
+        .map(|queries| ForwardSearch::new(graph, &buckets, queries, num_targets).perform())
+        .collect();
+
+    results
 }

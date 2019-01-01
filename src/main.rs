@@ -12,7 +12,6 @@ use serde_json;
 
 pub use self::errors::*;
 use self::graph::Graph;
-pub use self::m2m::ManyToMany;
 
 #[derive(Deserialize)]
 struct Queries {
@@ -42,17 +41,15 @@ where
 
 fn main() -> Result<()> {
     let queries: Queries = load_json("data/queries.json")?;
-    let num_targets = queries.targets.len();
     let expected_results: Vec<Vec<f64>> = load_json("data/results.json")?;
     let graph = Graph::from_file("data/1.osrm.hsgr")?;
 
-    let mut m2m = ManyToMany::new(graph, queries.targets, queries.sources)?;
+    let results = time("m2m.perform()", || {
+        m2m::many_to_many(&graph, queries.sources, queries.targets)
+    });
 
-    time("m2m.perform()", || m2m.perform());
-
-    let results: Vec<Vec<f64>> = m2m
-        .results
-        .chunks(num_targets)
+    let results: Vec<Vec<f64>> = results
+        .iter()
         .map(|row| {
             row.iter()
                 .map(|option| option.unwrap_or((0, 0)))

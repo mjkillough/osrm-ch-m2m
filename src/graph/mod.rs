@@ -66,10 +66,6 @@ impl Graph {
         })
     }
 
-    pub fn num_nodes(&self) -> usize {
-        self.nodes.len()
-    }
-
     pub fn get_adjacent_edges(
         &self,
         node_id: NodeId,
