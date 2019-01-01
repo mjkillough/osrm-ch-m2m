@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use superslice::Ext;
 
 use crate::graph::{Direction, Graph, NodeId, Weight};
@@ -236,6 +237,31 @@ pub fn many_to_many(
 
     let results = source_queries
         .into_iter()
+        .map(|queries| ForwardSearch::new(graph, &buckets, queries, num_targets).perform())
+        .collect();
+
+    results
+}
+
+// Differs only in `.into_iter()` -> `.into_par_iter()`, but we can't easily make the
+// function generic over `Iterator`/`ParallelIterator`.
+pub fn parallel_many_to_many(
+    graph: &Graph,
+    source_queries: Vec<Vec<Query>>,
+    target_queries: Vec<Vec<Query>>,
+) -> Vec<Vec<Option<(Weight, Weight)>>> {
+    let num_targets = target_queries.len();
+    let mut buckets = target_queries
+        .into_par_iter()
+        .enumerate()
+        .map(|(idx, queries)| BackwardSearch::new(graph, queries, idx).perform())
+        .flatten()
+        .collect::<Vec<_>>();
+
+    buckets.sort_by_key(|bucket| bucket.middle_node);
+
+    let results = source_queries
+        .into_par_iter()
         .map(|queries| ForwardSearch::new(graph, &buckets, queries, num_targets).perform())
         .collect();
 

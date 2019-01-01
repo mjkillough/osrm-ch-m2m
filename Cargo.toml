@@ -10,6 +10,7 @@ bindgen = "0.42"
 [dependencies]
 bitvec = "0.9"
 priority-queue = "0.5"
+rayon = "1.0"
 superslice = "0.1"
 tar = "0.4"
 
