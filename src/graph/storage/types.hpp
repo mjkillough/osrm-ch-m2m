@@ -1,21 +1,25 @@
 #include <cstddef>
 #include <cstdint>
 
+using NodeID = std::uint32_t;
+using EdgeID = std::uint32_t;
+using Weight = std::int32_t;
+
 struct EdgeArrayEntry
 {
-    std::uint32_t target;
+    NodeID target;
 
-    std::uint32_t turn_id : 31;
+    NodeID turn_id : 31;
     bool shortcut : 1;
-    std::int32_t weight;
-    std::int32_t duration : 30;
+    Weight weight;
+    Weight duration : 30;
     bool forward : 1;
     bool backward : 1;
 };
 
 struct NodeArrayEntry
 {
-    std::uint32_t first_edge;
+    EdgeID first_edge;
 };
 
 struct Metadata
