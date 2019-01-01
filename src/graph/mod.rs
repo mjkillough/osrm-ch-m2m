@@ -66,6 +66,8 @@ impl Graph {
         })
     }
 
+    // https://github.com/Project-OSRM/osrm-backend/blob/5.18/include/util/static_graph.hpp#L172-L180
+
     pub fn get_adjacent_edges(
         &self,
         node_id: NodeId,

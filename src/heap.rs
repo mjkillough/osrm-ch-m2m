@@ -6,6 +6,8 @@ use serde::Deserialize;
 
 use crate::graph::{NodeId, Weight};
 
+// https://github.com/Project-OSRM/osrm-backend/blob/5.18/include/util/query_heap.hpp#L195
+
 #[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Query {
     pub node: NodeId,
@@ -14,6 +16,7 @@ pub struct Query {
     pub duration: Weight,
 }
 
+/// Reverses the order of comparison checks for `T`.
 #[derive(Eq, PartialEq)]
 struct Reverse<T>(T)
 where

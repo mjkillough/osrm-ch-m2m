@@ -4,12 +4,17 @@ use superslice::Ext;
 use crate::graph::{Direction, Graph, NodeId, Weight};
 use crate::heap::{Query, QueryHeap};
 
+// NodeBucket:
+// https://github.com/Project-OSRM/osrm-backend/blob/5.18/include/engine/routing_algorithms/many_to_many.hpp
 struct Bucket {
     middle_node: NodeId,
     column_index: usize,
     weight: Weight,
     duration: Weight,
 }
+
+// Result of this file:
+// https://github.com/Project-OSRM/osrm-backend/blob/5.18/src/engine/routing_algorithms/many_to_many_ch.cpp
 
 struct Search<'a> {
     graph: &'a Graph,
