@@ -26,6 +26,7 @@ impl<T> Ord for Reverse<T>
 where
     T: Ord,
 {
+    #[inline]
     fn cmp(&self, other: &Reverse<T>) -> Ordering {
         other.0.cmp(&self.0)
     }
@@ -35,6 +36,7 @@ impl<T> PartialOrd for Reverse<T>
 where
     T: Ord + PartialOrd,
 {
+    #[inline]
     fn partial_cmp(&self, other: &Reverse<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }

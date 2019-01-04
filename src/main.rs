@@ -63,8 +63,10 @@ fn main() -> Result<()> {
         queries.targets.len()
     );
 
+    let sources = queries.sources.clone();
+    let targets = queries.targets.clone();
     let results = time("non-parallel", || {
-        m2m::many_to_many(&graph, queries.sources.clone(), queries.targets.clone())
+        m2m::many_to_many(&graph, sources, targets)
     });
     println!(
         "non-parallel results equal expected? {}",

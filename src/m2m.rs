@@ -57,7 +57,7 @@ impl<'a> Search<'a> {
                 node: edge.target,
                 parent: node,
                 weight: weight + edge.weight,
-                duration: duration + edge.duration,
+                duration: duration + edge.duration(),
             };
 
             if let Some(current) = self.heap.get(edge.target) {
@@ -212,7 +212,7 @@ impl<'a> ForwardSearch<'a> {
         {
             if node == edge.target {
                 let value = if use_duration {
-                    edge.duration
+                    edge.duration()
                 } else {
                     edge.weight
                 };

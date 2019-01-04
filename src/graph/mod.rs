@@ -19,6 +19,7 @@ pub enum Direction {
 impl Not for Direction {
     type Output = Direction;
 
+    #[inline(always)]
     fn not(self) -> Self::Output {
         match self {
             Direction::Forward => Direction::Backward,
@@ -27,29 +28,7 @@ impl Not for Direction {
     }
 }
 
-#[derive(Debug)]
-pub struct Edge {
-    pub target: NodeId,
-    pub weight: Weight,
-    pub duration: Weight,
-
-    // TODO: Are these mutually exclusive? If so, we can treat as an enum.
-    // OSRM stores them as two bools, which allows them to equal each other.
-    pub forward: bool,
-    pub backward: bool,
-}
-
-impl From<&EdgeArrayEntry> for Edge {
-    fn from(entry: &EdgeArrayEntry) -> Edge {
-        Edge {
-            target: entry.target,
-            weight: entry.weight,
-            duration: entry.duration(),
-            forward: entry.forward(),
-            backward: entry.backward(),
-        }
-    }
-}
+type Edge = EdgeArrayEntry;
 
 pub struct Graph {
     nodes: Vec<NodeArrayEntry>,
@@ -72,7 +51,7 @@ impl Graph {
         &self,
         node_id: NodeId,
         direction: Direction,
-    ) -> impl Iterator<Item = Edge> + '_ {
+    ) -> impl Iterator<Item = &Edge> + '_ {
         let node_id = node_id as usize;
         let node = &self.nodes[node_id];
         // TODO: Figure out why this never panics?
@@ -88,9 +67,10 @@ impl Graph {
                 (direction == Direction::Forward && entry.forward())
                     || (direction == Direction::Backward && entry.backward())
             })
-            .map(|(_, entry)| entry.into())
+            .map(|(_, entry)| entry)
     }
 
+    #[inline]
     fn include_edge(&self, edge_id: usize) -> bool {
         self.include_edges.get(edge_id)
     }
