@@ -13,7 +13,7 @@ struct Bucket {
     duration: Weight,
 }
 
-// Result of this file:
+// Rest of this file:
 // https://github.com/Project-OSRM/osrm-backend/blob/5.18/src/engine/routing_algorithms/many_to_many_ch.cpp
 
 struct Search<'a> {
