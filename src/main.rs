@@ -75,7 +75,7 @@ fn main() -> Result<()> {
         m2m::parallel_many_to_many(&graph, queries.sources, queries.targets)
     });
     println!(
-        "non-parallel results equal expected? {}",
+        "parallel results equal expected? {}",
         convert_results(results) == expected_results
     );
 
