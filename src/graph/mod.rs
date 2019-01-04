@@ -28,7 +28,7 @@ impl Not for Direction {
     }
 }
 
-type Edge = EdgeArrayEntry;
+pub type Edge = EdgeArrayEntry;
 
 pub struct Graph {
     nodes: Vec<NodeArrayEntry>,
