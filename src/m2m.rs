@@ -125,30 +125,23 @@ impl<'a> BucketJoiner<'a> {
     }
 
     fn perform(&mut self) {
-        for source_bucket in self.source_buckets {
+        for source in self.source_buckets {
             let range = self
                 .target_buckets
-                .equal_range_by_key(&source_bucket.middle_node, |bucket| bucket.middle_node);
+                .equal_range_by_key(&source.middle_node, |bucket| bucket.middle_node);
 
-            for target_bucket in &self.target_buckets[range] {
-                let source_weight = source_bucket.weight;
-                let source_duration = source_bucket.duration;
-                let target_weight = target_bucket.weight;
-                let target_duration = target_bucket.duration;
-
-                let idx = target_bucket.column_index;
+            for target in &self.target_buckets[range] {
+                let idx = target.column_index;
                 let current = self.results[idx];
 
-                let new_weight = source_weight + target_weight;
-                let new_duration = source_duration + target_duration;
+                let new_weight = source.weight + target.weight;
+                let new_duration = source.duration + target.duration;
                 let new = (new_weight, new_duration);
 
                 if new_weight < 0 {
-                    if let Some((loop_weight, loop_duration)) = self.should_add_loop_weight(
-                        source_bucket.middle_node,
-                        new_weight,
-                        new_duration,
-                    ) {
+                    if let Some((loop_weight, loop_duration)) =
+                        self.should_add_loop_weight(source.middle_node, new_weight, new_duration)
+                    {
                         if Some((loop_weight, loop_duration)) < current {
                             self.results[idx] = Some((loop_weight, loop_duration));
                         }
