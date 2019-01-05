@@ -124,7 +124,7 @@ impl<'a> BucketJoiner<'a> {
         }
     }
 
-    fn perform(&mut self) {
+    fn perform(self) {
         for source in self.source_buckets {
             let range = self
                 .target_buckets
