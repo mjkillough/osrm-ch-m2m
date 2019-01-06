@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 use superslice::Ext;
 
@@ -270,7 +271,7 @@ impl<'a> ManyToMany<'a> {
             .map(|(_, buckets)| buckets)
             .flatten()
             .collect::<Vec<_>>();
-        target_buckets.sort_by_key(|bucket| bucket.middle_node);
+        target_buckets.par_sort_unstable_by_key(|bucket| bucket.middle_node);
 
         let graph = &self.graph;
         let source_buckets = &self.source_buckets;
@@ -290,9 +291,11 @@ impl<'a> ManyToMany<'a> {
                 BucketJoiner::new(graph, row, &target_buckets, source_buckets).perform();
             });
 
-        // TODO: Investigate whether we can do some kind of merge sort here.
-        self.target_buckets.append(&mut target_buckets);
-        self.target_buckets.sort_by_key(|bucket| bucket.middle_node);
+        // Merge two sorted vec of buckets:
+        self.target_buckets = std::mem::replace(&mut self.target_buckets, Vec::new())
+            .into_iter()
+            .merge_by(target_buckets, |a, b| a.middle_node < b.middle_node)
+            .collect();
     }
 
     fn compute_new_sources(&mut self) {
@@ -326,8 +329,12 @@ impl<'a> ManyToMany<'a> {
     }
 
     pub fn compute(&mut self) -> &Vec<Vec<Option<(Weight, Weight)>>> {
-        self.compute_new_targets();
-        self.compute_new_sources();
+        if !self.target_queries.is_empty() {
+            self.compute_new_targets();
+        }
+        if !self.source_queries.is_empty() {
+            self.compute_new_sources();
+        }
 
         &self.results
     }
